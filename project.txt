@@ -1,0 +1,217 @@
+--Task1--
+db.Employees.insertOne({
+  EmployeeID: 1,
+  FirstName: "John",
+  LastName: "Doe",
+  DateOfBirth: new Date("1985-05-15"),
+  Department: "HR"
+})
+db.Orders.insertOne({
+  OrderID: 101,
+  OrderDate: new Date("2024-09-14"),
+  CustomerID: 501,
+  Amount: 250.00
+})
+
+
+--Task2--
+db.Employees.insertOne({
+  EmployeeID: 1,
+  FirstName: "Alice",
+  LastName: "Johnson",
+  DateOfBirth: new Date("1990-01-15"),
+  Department: "HR"
+})
+db.Orders.insertMany([
+  {
+    OrderID: 102,
+    OrderDate: new Date("2024-09-10"),
+    CustomerID: 502,
+    Amount: 300.50
+  },
+  {
+    OrderID: 103,
+    OrderDate: new Date("2024-09-12"),
+    CustomerID: 503,
+    Amount: 450.00
+  },
+  {
+    OrderID: 104,
+    OrderDate: new Date("2024-09-13"),
+    CustomerID: 504,
+    Amount: 125.75
+  }
+])
+
+
+--Task3--
+db.Employees.find()
+db.Orders.find()
+db.Employees.find({}, { FirstName: 1, LastName: 1, _id: 0 })
+db.Orders.find({}, { OrderID: 1, Amount: 1, _id: 0 })
+
+
+--Task4--
+db.Employees.updateOne(
+  { EmployeeID: 1 },            // Filter to find the document
+  { $set: { Department: "Finance" } } // Update the Department field
+)
+db.Orders.updateOne(
+  { OrderID: 2 },              // Filter to find the document
+  { $set: { Amount: 500.00 } }  // Update the Amount field
+)
+
+
+--Task5--
+db.Employees.deleteOne({ EmployeeID: 1 })
+db.Orders.deleteMany({ Amount: { $lt: 100 } })
+
+
+--Task6--
+db.Employees.find({ Department: "HR" })
+db.Orders.find({ Amount: { $gt: 300 } })
+
+
+--Task7--
+db.Employees.find({
+  Department: "HR",
+  DateOfBirth: { $gt: new Date("1990-01-01") }
+})
+db.Orders.find({
+  Amount: { $gt: 300 },
+  OrderDate: { $lt: new Date("2023-01-01") }
+})
+db.Employees.find({
+  $or: [
+    { Department: "HR" },
+    { Department: "Finance" }
+  ]
+})
+db.Orders.find({
+  $or: [
+    { Amount: { $lt: 100 } },
+    { OrderDate: { $gt: new Date("2023-01-01") } }
+  ]
+})
+
+
+--Task8--
+db.Employees.find().sort({ LastName: 1 })
+db.Orders.find().sort({ Amount: -1 })
+
+
+--Task9--
+db.Employees.countDocuments()
+db.Orders.countDocuments()
+db.Orders.aggregate([
+  { $group: { _id: null, averageAmount: { $avg: "$Amount" } } }
+])
+db.Employees.aggregate([
+  {
+    $addFields: {
+      age: { 
+        $subtract: [ 
+          { $year: new Date() }, 
+          { $year: "$DateOfBirth" } 
+        ]
+      }
+    }
+  },
+  {
+    $group: { _id: null, averageAge: { $avg: "$age" } }
+  }
+])
+
+
+--Task10--
+db.Employees.aggregate([
+  {
+    $group: {
+      _id: "$Department",           // Group by Department
+      employeeCount: { $sum: 1 }    // Count the number of employees
+    }
+  }
+])
+db.Orders.aggregate([
+  {
+    $group: {
+      _id: "$CustomerID",             // Group by CustomerID
+      totalAmount: { $sum: "$Amount" } // Sum the Amount for each CustomerID
+    }
+  }
+])
+
+
+--Task11--
+db.Employees.aggregate([
+  {
+    $group: {
+      _id: "$Department",           // Group by Department
+      employeeCount: { $sum: 1 }    // Count the number of employees
+    }
+  },
+  {
+    $match: {
+      employeeCount: { $gt: 5 }     // Filter departments with more than 5 employees
+    }
+  }
+])
+db.Orders.aggregate([
+  {
+    $group: {
+      _id: "$CustomerID",             // Group by CustomerID
+      totalAmount: { $sum: "$Amount" } // Calculate total Amount for each CustomerID
+    }
+  },
+  {
+    $match: {
+      totalAmount: { $gt: 1000 }       // Filter CustomerIDs with total Amount greater than 1000
+    }
+  }
+])
+
+
+--Task12--
+db.Employees.aggregate([
+  {
+    $lookup: {
+      from: "Orders",               // Collection to join with
+      localField: "EmployeeID",     // Field from Employees
+      foreignField: "CustomerID",   // Field from Orders
+      as: "orders"                  // Alias for the joined data
+    }
+  },
+  {
+    $unwind: "$orders"               // Deconstruct the orders array
+  },
+  {
+    $project: {
+      FirstName: 1,                  // Include FirstName
+      LastName: 1,                   // Include LastName
+      Amount: "$orders.Amount"       // Include Amount from orders
+    }
+  }
+])
+db.Employees.aggregate([
+  {
+    $lookup: {
+      from: "Orders",               // Collection to join with
+      localField: "EmployeeID",     // Field from Employees
+      foreignField: "CustomerID",   // Field from Orders
+      as: "orders"                  // Alias for the joined data
+    }
+  },
+  {
+    $unwind: {
+      path: "$orders",              // Deconstruct the orders array
+      preserveNullAndEmptyArrays: true  // Keep employees even if no matching orders
+    }
+  },
+  {
+    $project: {
+      FirstName: 1,                  // Include FirstName
+      LastName: 1,                   // Include LastName
+      Amount: "$orders.Amount"       // Include Amount from orders, which might be null
+    }
+  }
+])

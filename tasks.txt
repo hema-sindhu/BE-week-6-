@@ -1,0 +1,68 @@
+db.createCollection("Patients")
+db.createCollection("Doctors")
+db.createCollection("Appointments")
+db.createCollection("Prescriptions")
+db.createCollection("Billing")
+
+db.Patients.insertMany([
+  { PatientID: 1, Name: "John Doe", DOB: new Date("1985-06-15"), DoctorID: 101 },
+  { PatientID: 2, Name: "Jane Smith", DOB: new Date("1990-09-22"), DoctorID: 102 }
+])
+db.Doctors.insertMany([
+  { DoctorID: 101, Name: "Dr. Alice Brown", Specialty: "Cardiology", Available: true },
+  { DoctorID: 102, Name: "Dr. Bob White", Specialty: "Neurology", Available: false }
+])
+db.Appointments.insertMany([
+  { AppointmentID: 1, PatientID: 1, DoctorID: 101, Date: new Date("2024-09-15"), Status: "Scheduled" },
+  { AppointmentID: 2, PatientID: 2, DoctorID: 102, Date: new Date("2024-09-16"), Status: "Scheduled" }
+])
+
+db.Appointments.find({
+  DoctorID: doctorID,
+  Date: new Date("appointmentDate")
+})
+
+db.Appointments.updateOne(
+  { AppointmentID: appointmentID },
+  { $set: { Status: newStatus } }
+)
+
+db.Patients.deleteMany({
+  DOB: { $lt: new Date(new Date().setFullYear(new Date().getFullYear() - 5)) }
+})
+
+db.Appointments.find({ DoctorID: doctorID })
+db.Appointments.find({ PatientID: patientID })
+
+db.Doctors.find({
+  $and: [
+    { Specialty: "Cardiology" },
+    { Available: true }
+  ]
+})
+db.Doctors.find({
+  $or: [
+    { Specialty: "Cardiology" },
+    { Available: true }
+  ]
+})
+
+db.Appointments.find().sort({ Date: 1 })
+
+db.Appointments.aggregate([
+  {
+    $group: {
+      _id: "$DoctorID",                // Group by DoctorID
+      totalPatients: { $count: {} }     // Count the number of appointments (patients) per doctor
+    }
+  }
+])
+
+db.Prescriptions.aggregate([
+  {
+    $group: {
+      _id: "$PatientID",                // Group by PatientID
+      totalPrescriptions: { $count: {} } // Count the number of prescriptions per patient
+    }
+  }
+])
